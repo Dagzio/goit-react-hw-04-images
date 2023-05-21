@@ -66,7 +66,13 @@ const App = () => {
         .then(response => {
           const lastPage = Math.ceil(Number(response.data.totalHits) / 12);
 
-          checkLastPage(response, lastPage);
+          if (
+            response.data.hits.length === 0 ||
+            lastPage === searchState.page
+          ) {
+            dispatch({ type: 'setIsLoading', payload: false });
+            Notify.failure('Invalid request or you have reached the last page');
+          }
           dispatch({ type: 'loadMoreImages', payload: response.data.hits });
         })
         .finally(() => {
@@ -89,13 +95,6 @@ const App = () => {
 
   const closeModal = () => {
     dispatch({ type: 'closeModal' });
-  };
-
-  const checkLastPage = (response, lastPage) => {
-    if (response.data.hits.length === 0 || lastPage === searchState.page) {
-      dispatch({ type: 'setIsLoading', payload: false });
-      Notify.failure('Invalid request or you have reached the last page');
-    }
   };
 
   return (
