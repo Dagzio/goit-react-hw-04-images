@@ -6,6 +6,7 @@ import fetchImages from 'Api';
 import Loader from 'components/Loader/Loader';
 import Button from 'components/Button/Button';
 import Modal from 'components/Modal/Modal';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 const reducer = (state, { type, payload }) => {
   switch (type) {
@@ -65,13 +66,7 @@ const App = () => {
         .then(response => {
           const lastPage = Math.ceil(Number(response.data.totalHits) / 12);
 
-          if (
-            response.data.hits.length === 0 ||
-            lastPage === searchState.page
-          ) {
-            dispatch({ type: 'setIsLoading', payload: false });
-            alert('Invalid text of response or you have reached the last page');
-          }
+          checkLastPage(response, lastPage);
           dispatch({ type: 'loadMoreImages', payload: response.data.hits });
         })
         .finally(() => {
@@ -94,6 +89,13 @@ const App = () => {
 
   const closeModal = () => {
     dispatch({ type: 'closeModal' });
+  };
+
+  const checkLastPage = (response, lastPage) => {
+    if (response.data.hits.length === 0 || lastPage === searchState.page) {
+      dispatch({ type: 'setIsLoading', payload: false });
+      Notify.failure('Invalid request or you have reached the last page');
+    }
   };
 
   return (
