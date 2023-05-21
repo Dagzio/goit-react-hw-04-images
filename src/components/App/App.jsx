@@ -1,102 +1,118 @@
-import { Component } from 'react';
+import { useEffect, useReducer } from 'react';
 import { Container } from './App.styled';
 import Searchbar from 'components/Searchbar/Searchbar';
 import ImageGallery from 'components/ImageGallery/ImageGallery';
-import { fetchImages } from 'Api';
+import fetchImages from 'Api';
 import Loader from 'components/Loader/Loader';
 import Button from 'components/Button/Button';
 import Modal from 'components/Modal/Modal';
 
-export default class App extends Component {
-  state = {
+const reducer = (state, { type, payload }) => {
+  switch (type) {
+    case 'formSubmit':
+      return {
+        ...state,
+        page: 1,
+        images: [],
+        searchQuery: payload,
+      };
+    case 'setIsLoading':
+      return {
+        ...state,
+        isLoading: payload,
+      };
+    case 'loadMoreImages':
+      return {
+        ...state,
+        images: [...state.images, ...payload],
+      };
+    case 'setPage':
+      return {
+        ...state,
+        page: state.page + 1,
+      };
+    case 'openModal':
+      return {
+        ...state,
+        modalImg: payload,
+        showModal: true,
+      };
+    case 'closeModal':
+      return {
+        ...state,
+        showModal: false,
+      };
+    default:
+      return state;
+  }
+};
+
+const App = () => {
+  const [searchState, dispatch] = useReducer(reducer, {
     searchQuery: '',
     images: [],
     page: 1,
     isLoading: false,
     showModal: false,
     modalImg: '',
-  };
+    visibleLoadMoreBtn: true,
+  });
 
-  componentDidUpdate(none, prevState) {
-    if (
-      prevState.searchQuery !== this.state.searchQuery ||
-      prevState.page !== this.state.page
-    ) {
-      this.setState({
-        isLoading: true,
-      });
-      fetchImages(this.state.searchQuery, this.state.page)
+  useEffect(() => {
+    dispatch({ type: 'setIsLoading', payload: true });
+    if (searchState.searchQuery.trim() !== '') {
+      fetchImages(searchState.searchQuery, searchState.page)
         .then(response => {
-          if (response.data.hits.length === 0) {
-            alert('Invalid text of response щr you have reached the last page');
+          const lastPage = Math.ceil(Number(response.data.totalHits) / 12);
+
+          if (
+            response.data.hits.length === 0 ||
+            lastPage === searchState.page
+          ) {
+            dispatch({ type: 'setIsLoading', payload: false });
+            alert('Invalid text of response or you have reached the last page');
           }
-          this.setState(prevState => ({
-            images: [...prevState.images, ...response.data.hits],
-          }));
+          dispatch({ type: 'loadMoreImages', payload: response.data.hits });
         })
         .finally(() => {
-          this.setState({
-            isLoading: false,
-          });
+          dispatch({ type: 'setIsLoading', payload: false });
         });
     }
-  }
+  }, [searchState.searchQuery, searchState.page]);
 
-  handleFormSubmit = searchQuery => {
-    this.setState({
-      page: 1,
-      images: [],
-      searchQuery,
-    });
+  const handleFormSubmit = query => {
+    dispatch({ type: 'formSubmit', payload: query });
   };
 
-  onLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const onLoadMore = () => {
+    dispatch({ type: 'setPage' });
   };
 
-  showModal = modalImg => {
-    this.setState({
-      modalImg,
-      showModal: true,
-    });
+  const showModal = modalImg => {
+    dispatch({ type: 'openModal', payload: modalImg });
   };
 
-  closeModal = () => {
-    this.setState({
-      showModal: false,
-    });
+  const closeModal = () => {
+    dispatch({ type: 'closeModal' });
   };
 
-  toggleLoaderVisible = () => {
-    this.setState(prevState => ({ isLoading: !prevState.isLoading }));
-  };
-
-  render() {
-    return (
-      <Container>
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        {this.state.images.length > 0 && (
-          <>
-            <ImageGallery
-              images={this.state.images}
-              showModal={this.showModal}
-            />
-            {this.state.isLoading ? (
-              <Loader visible={this.state.isLoading} />
-            ) : (
-              <Button onClick={this.onLoadMore} />
-            )}
-            {this.state.showModal && (
-              <Modal
-                modalImg={this.state.modalImg}
-                closeModal={this.closeModal}
-              />
-            )}
-          </>
-        )}
-      </Container>
-    );
-  }
-}
+  return (
+    <Container>
+      <Searchbar onSubmit={handleFormSubmit} />
+      {searchState.images.length > 0 && (
+        <>
+          <ImageGallery images={searchState.images} showModal={showModal} />
+          {searchState.isLoading ? (
+            <Loader visible={searchState.isLoading} />
+          ) : (
+            <Button onClick={onLoadMore} />
+          )}
+          {searchState.showModal && (
+            <Modal modalImg={searchState.modalImg} closeModal={closeModal} />
+          )}
+        </>
+      )}
+    </Container>
+  );
+};
+export default App;

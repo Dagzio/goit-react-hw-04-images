@@ -23,16 +23,15 @@ const ImageGallery = ({ images, showModal }) => {
   );
 };
 
-
 ImageGallery.propTypes = {
-  images: PropTypes.arrayOf(PropTypes.shape({
-    webformatURL: PropTypes.string.isRequired,
-    tags: PropTypes.string.isRequired,
-    largeImageURL: PropTypes.string.isRequired,
-  })),
+  images: PropTypes.arrayOf(
+    PropTypes.shape({
+      webformatURL: PropTypes.string.isRequired,
+      tags: PropTypes.string.isRequired,
+      largeImageURL: PropTypes.string.isRequired,
+    })
+  ),
   showModal: PropTypes.func,
 };
 
 export default ImageGallery;
-
-

@@ -16,5 +16,5 @@ export default function Loader({ visible }) {
 }
 
 Loader.propTypes = {
-  visible: PropTypes.string,
+  visible: PropTypes.bool,
 };

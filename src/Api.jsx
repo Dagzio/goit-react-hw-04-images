@@ -8,9 +8,11 @@ const options = {
   per_page: 12,
 };
 
-export const fetchImages = (query, page) => {
+const fetchImages = (query, page) => {
   const { BASE_URL, API_KEY, image_type, orientation, per_page } = options;
   return axios.get(
     `${BASE_URL}?key=${API_KEY}&q=${query}&image_type=${image_type}&orientation=${orientation}&page=${page}&per_page=${per_page}`
   );
 };
+
+export default fetchImages;
